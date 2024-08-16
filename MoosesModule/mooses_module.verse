@@ -49,12 +49,10 @@ mooses_module<public> := module:
         
         teleport_to_random := class(creative_device):
 
-            <#
-                If you don't want the players to be able to go back into the teleporters
-                they are teleported to. Set the group to None on all the teleporters, you 
-                should additionally hide the rift and vfx if the player can't use them.
-            #>
-        
+            <#If you don't want the players to be able to go back into the teleporters
+            they are teleported to. Set the group to None on all the teleporters, you 
+            should additionally hide the rift and vfx if the player can't use them.#>
+
             @editable
             Teleporters : []teleporter_device = array{}
         
@@ -78,25 +76,64 @@ mooses_module<public> := module:
     time<public> := module:
 
         # Time and date class
-        time_and_date<public> := struct:
-            Year<public> : int
-            Month<public> : int
-            Day<public> : int
-            Hour<public> : int
-            Minute<public> : int
-            Second<public> : int
+        time_and_date<public> := struct<concrete>:
+            Year<public> : int = 0
+            Month<public> : int = 0
+            Day<public> : int = 0
+            Hour<public> : int = 0
+            Minute<public> : int = 0
+            Second<public> : int = 0
             # Used for comparison
-            EpochSeconds<public> : float
+            @editable
+            EpochSeconds<public> : float = 0.0
 
-        (T : time_and_date).Print<public>():void=
+        # Returns the hours minutes and seconds in string format
+        (T : time_and_date).FormatToString<public>():string=
+            T.EpochSeconds.FormatTime(?Digits := 3)
+
+        # Prints the time and date
+        (Time : time_and_date).Print<public>():void=
+            T  := MakeTimeAndDateFromSeconds(Time.EpochSeconds)
             Print("{T.Year}, {T.Month}, {T.Day}\n{T.Hour}:{T.Minute}:{T.Second}")
 
+        # Fails if T is less than TimeAndDate
         (T : time_and_date).GreaterThan<public>(TimeAndDate : time_and_date)<transacts><decides>:void=
             T.EpochSeconds > TimeAndDate.EpochSeconds
 
+        # Returns a new time_and_date object which indicates time since OldTime to NewTime
         (NewTime : time_and_date).TimeSince<public>(OldTime : time_and_date)<transacts>:time_and_date=
             EpochSeconds := NewTime.EpochSeconds - OldTime.EpochSeconds
             MakeTimeAndDateFromSeconds(EpochSeconds, ?StartingYear := 0, ?StartingMonth := 0, ?StartingDay := 0)
+
+        # Formats time in HH:MM:SS format, Digits indicates whether to show hours, minutes, seconds
+        (Time : float).FormatTime<public>(?Digits : int = 3):string=
+            if:
+                Hours := Int[Time / 3600.0]
+                var Minutes : int = Int[(Mod[Int[Time], 3600] * 1.0) / 60.0]
+                var Seconds : int = Mod[Int[Time], 60]
+            then:
+                if(Digits = 2, NewMinutes := Int[Time / 60.0]):
+                    set Minutes = NewMinutes
+                if(Digits = 1, NewSeconds := Int[Time]):
+                    set Seconds = NewSeconds
+                var StringHours : string = "{Hours}"
+                var StringMinutes : string = "{Minutes}"
+                var StringSeconds : string = "{Seconds}"
+                if(Hours < 10):
+                    set StringHours = "0"+StringHours
+                if(Minutes < 10):
+                    set StringMinutes = "0"+StringMinutes
+                if(Seconds < 10):
+                    set StringSeconds = "0"+StringSeconds
+                case(Digits):
+                    3=>
+                        return "{StringHours}:{StringMinutes}:{StringSeconds}"
+                    2=>
+                        return "{StringMinutes}:{StringSeconds}"
+                    1=>
+                        return "{StringSeconds}"
+                    _=>
+            "0:00"
 
         # Makes a new time_and_date object from parameters
         MakeTimeAndDate<public>(Year : int, Month : int, Day : int, Hour : int, Minute : int, Second : int, EpochSeconds : float)<transacts>:time_and_date=
@@ -134,7 +171,7 @@ mooses_module<public> := module:
         # Array of all the days in a month in a non leap year
         DaysInMonth : []int = array{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 
-        # Returns the Int version of Seconds / Divisor
+        # Returns the Int version zof Seconds / Divisor
         MakeTimeUnit(Seconds : float, Divisor : float)<transacts>:int=
             if(Unit := Int[Seconds / Divisor]):
                 return Unit
@@ -202,3 +239,4 @@ mooses_module<public> := module:
         GetTimeAndDate<public>()<transacts>:time_and_date=
             Seconds := GetSecondsSinceEpoch()
             MakeTimeAndDateFromSeconds(Seconds)
+
