@@ -78,7 +78,7 @@ mooses_module<public> := module:
     time<public> := module:
 
         # Time and date class
-        time_and_date<public> := class:
+        time_and_date<public> := struct:
             Year<public> : int
             Month<public> : int
             Day<public> : int
@@ -88,12 +88,15 @@ mooses_module<public> := module:
             # Used for comparison
             EpochSeconds<public> : float
 
-            Print<public>():void=
-                Print("{Year}, {Month}, {Day}\n{Hour}:{Minute}:{Second}")
+        (T : time_and_date).Print<public>():void=
+            Print("{T.Year}, {T.Month}, {T.Day}\n{T.Hour}:{T.Minute}:{T.Second}")
 
-            GreaterThan<public>(TimeAndDate : time_and_date)<transacts><decides>:void=
-                EpochSeconds > TimeAndDate.EpochSeconds
+        (T : time_and_date).GreaterThan<public>(TimeAndDate : time_and_date)<transacts><decides>:void=
+            T.EpochSeconds > TimeAndDate.EpochSeconds
 
+        (NewTime : time_and_date).TimeSince<public>(OldTime : time_and_date)<transacts>:time_and_date=
+            EpochSeconds := NewTime.EpochSeconds - OldTime.EpochSeconds
+            MakeTimeAndDateFromSeconds(EpochSeconds, ?StartingYear := 0, ?StartingMonth := 0, ?StartingDay := 0)
 
         # Makes a new time_and_date object from parameters
         MakeTimeAndDate<public>(Year : int, Month : int, Day : int, Hour : int, Minute : int, Second : int, EpochSeconds : float)<transacts>:time_and_date=
@@ -138,13 +141,13 @@ mooses_module<public> := module:
             0
 
         # Makes a time_and_date object from the given Seconds
-        MakeTimeAndDateFromSeconds<public>(EpochSeconds : float)<transacts>:time_and_date=
+        MakeTimeAndDateFromSeconds<public>(EpochSeconds : float, ?StartingYear : int = 1970, ?StartingMonth : int = 1, ?StartingDay : int = 1)<transacts>:time_and_date=
             SecondsInMinute := 60.0
             SecondsInHour := SecondsInMinute * 60.0
             SecondsInDay := SecondsInHour * 24.0
 
             # Calculate years
-            var Year : int = 1970
+            var Year : int = StartingYear
             var SecondsSinceEpoch : float = EpochSeconds
             loop:
                 SecondsInYear := GetSecondsInYear(Year)
@@ -155,7 +158,7 @@ mooses_module<public> := module:
                     break
 
             # Calculate months
-            var Month : int = 1
+            var Month : int = StartingMonth
             loop:
                 if(var Days : int = DaysInMonth[Month-1]):
                     if(Month = 2 and IsLeapYear(Year)):
@@ -170,7 +173,7 @@ mooses_module<public> := module:
                     break
 
             # Calculate days
-            Day := MakeTimeUnit(SecondsSinceEpoch, SecondsInDay) + 1
+            Day := MakeTimeUnit(SecondsSinceEpoch, SecondsInDay) + StartingDay
             set SecondsSinceEpoch = GetModSecondsSinceEpoch(SecondsSinceEpoch, SecondsInDay)
 
             # Calculate hours
