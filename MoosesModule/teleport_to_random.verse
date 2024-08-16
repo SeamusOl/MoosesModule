@@ -13,7 +13,7 @@ using { /UnrealEngine.com/Temporary/Diagnostics }
 teleport_to_random := class(creative_device):
 
     @editable
-    Teleporters : []teleporter_device = teleporter_device{}
+    Teleporters : []teleporter_device = array{}
 
     @editable
     TeleportTrigger : trigger_device = trigger_device{}
