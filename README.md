@@ -6,4 +6,4 @@ To use the module:
 * To use a submodule, such as "utils", add "using { utils }" under the "using { MoosesModule.mooses_module }" line.
 * After adding the using statement it might show an error at first, build Verse code and the error should go away.
 
-  **Please report any issues or bugs on Twitter or Discord *@MooseInDaCut* **
+  **Please report any issues or bugs on Twitter or Discord** *@MooseInDaCut*
